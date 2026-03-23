@@ -1,108 +1,23 @@
-# React Native / Node 
+# dependencies
 node_modules/
-npm-debug.log*
-yarn-error.log
-yarn-debug.log*
-.pnp
-.pnp.js
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-
-# Expo (React Native)
-.expo/
-.expo-shared/
-dist/
-web-build/
-
-# Metro bundler cache
-.metro-health-check*
-
-# iOS build artifacts
-ios/Pods/
-ios/build/
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Android build artifacts
-android/app/build/
-android/build/
-*.apk
-*.aab
-
-# Python / FastAPI / Flask 
-__pycache__/
-*.py[cod]
-*$py.class
-*.pyc
-*.pyo
-*.pyd
-
-# Virtual environments
 venv/
-env/
-.venv/
-.env/
-ENV/
-env.bak/
-venv.bak/
 
-# Distribution / packaging
-build/
+# Expo / React Native
+.expo/
+web-build/
 dist/
-*.egg-info/
-*.egg
-.eggs/
 
-# Test & coverage
-.pytest_cache/
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
+# Python
+__pycache__/
+*.pyc
 
-# MyPy / type checkers
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# 
+# env
 .env
-.env.local
-.env.development
-.env.production
-.env.test
-*.env
 
-# databse
-*.sqlite
-*.db
-
-# genel
+# sys files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
 Thumbs.db
-Desktop.ini
 
-# IDE / Editör
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-
-# Log dosyaları
-*.log
-logs/
-
-# Geçici dosyalar
-*.tmp
-*.temp
-tmp/
-temp/
