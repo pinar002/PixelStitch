@@ -56,3 +56,42 @@ def process_image(image_input, pixel_size: int, max_colors: int):
         hex_palette.append(hex_code)
 
     return result, hex_palette
+
+def apply_adjustments(image: np.ndarray, brightness: int = 0, sharpness: int = 0, vibrance: int = 0) -> np.ndarray:
+    """
+    Applies brightness, sharpness, and vibrance settings to the image.
+    All operations use NumPy vectorization and OpenCV functions.
+    """
+
+    result = image.copy()
+
+    # --- BRIGHTNESS ---
+    # We add or subtract a fixed number from the RGB values of every pixel.
+    # np.clip ensures that values stay between 0 and 255.
+    # For example, if brightness=30, every pixel becomes 30 units brighter.
+    if brightness != 0:
+        result = np.clip(result.astype(np.int16) + brightness, 0, 255).astype(np.uint8)
+
+    # --- SHARPNESS ---
+    # We use the "Unsharp Masking" method:
+    # 1. Create a blurred version of the image.
+    # 2. Subtract the blur from the original to find the edges.
+    # 3. Add these edges back to the original to make it look sharper.
+    # Higher strength means a stronger sharpening effect.
+    if sharpness > 0:
+        strength = sharpness / 100.0 * 1.5  # Normalize 0-100 scale to 0-1.5
+        blurred = cv2.GaussianBlur(result, (0, 0), sigmaX=3)
+        result = cv2.addWeighted(result, 1 + strength, blurred, -strength, 0)
+        result = np.clip(result, 0, 255).astype(np.uint8)
+
+    # --- VIBRANCE ---
+    # We change the color space to HSV for this process.
+    # In HSV, the 'S' channel (Saturation) represents color intensity.
+    # We add or subtract the vibrance value from the S channel.
+    # np.clip ensures the S values stay between 0 and 255.
+    if vibrance != 0:
+        hsv = cv2.cvtColor(result, cv2.COLOR_RGB2HSV).astype(np.int16)
+        hsv[:, :, 1] = np.clip(hsv[:, :, 1] + vibrance * 2, 0, 255)
+        result = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
+
+    return result
