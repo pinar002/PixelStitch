@@ -24,8 +24,11 @@ def process_image(image_input, pixel_size: int, max_colors: int):
     # downsampling
     small_w = max(1, original_w // pixel_size)
     small_h = max(1, original_h // pixel_size)
+    cropped_w = small_w * pixel_size
+    cropped_h = small_h * pixel_size    
+    image = image[:cropped_h, :cropped_w]
     small = cv2.resize(image, (small_w, small_h), interpolation=cv2.INTER_LINEAR)
-
+    
     # flatten image
     pixels = small.reshape(-1, 3).astype(np.float32)
 
@@ -44,7 +47,7 @@ def process_image(image_input, pixel_size: int, max_colors: int):
     # INTER_NEAREST: use nearest-neighbor interpolation for pixel-art effect
     result = cv2.resize(
         quantized_small,
-        (original_w, original_h),
+        (small_w * pixel_size, small_h * pixel_size),
         interpolation=cv2.INTER_NEAREST
     )
 
@@ -95,3 +98,35 @@ def apply_adjustments(image: np.ndarray, brightness: int = 0, sharpness: int = 0
         result = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
 
     return result
+
+def draw_grid(image: np.ndarray, pixel_size: int, grid_color: tuple = (200, 200, 200)) -> np.ndarray:
+    """
+    Draws horizontal and vertical grid lines on the upscaled pixel art image.
+    Each line is placed at every pixel_size interval, outlining each 'virtual pixel' cell.
+    grid_color: RGB tuple for the grid line color (default: light gray)
+    """
+    result = image.copy()
+    h, w = result.shape[:2]
+
+    # Vertical lines 
+    for x in range(0, w, pixel_size):
+        cv2.line(result, (x, 0), (x, h), grid_color, 1)
+
+    # Horizontal lines 
+    for y in range(0, h, pixel_size):
+        cv2.line(result, (0, y), (w, y), grid_color, 1)
+
+    return result
+
+
+def get_hex_palette(rgb_colors) -> list:
+    """
+    Converts a list or numpy array of RGB colors to HEX color codes.
+    Each color must be in [R, G, B] format with values between 0-255.
+    Returns a list of HEX strings.
+    """
+    hex_palette = []
+    for color in rgb_colors:
+        r, g, b = int(color[0]), int(color[1]), int(color[2])
+        hex_palette.append(f"#{r:02X}{g:02X}{b:02X}")
+    return hex_palette
