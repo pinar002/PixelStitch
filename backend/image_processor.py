@@ -130,3 +130,53 @@ def get_hex_palette(rgb_colors) -> list:
         r, g, b = int(color[0]), int(color[1]), int(color[2])
         hex_palette.append(f"#{r:02X}{g:02X}{b:02X}")
     return hex_palette
+
+def draw_color_numbers(image: np.ndarray, pixel_size: int, palette: list) -> np.ndarray:
+    """
+    Draws the assigned color number at the center of each grid square.
+    Each unique color in the palette is mapped to a sequential number (1, 2, 3...).
+    Text color is chosen based on background brightness for readability.
+    """
+    result = image.copy()
+    h, w = result.shape[:2]
+
+    # Build a color-to-number mapping from the palette
+    # Key: HEX string, Value: sequential number starting from 1
+    color_map = {hex_code: idx + 1 for idx, hex_code in enumerate(palette)}
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = max(0.2, pixel_size / 60.0)  # Scale font size relative to pixel_size
+    thickness = 1
+
+    # Iterate over each grid square
+    for y in range(0, h, pixel_size):
+        for x in range(0, w, pixel_size):
+
+            sample_x = min(x + pixel_size // 2, w - 1)
+            sample_y = min(y + pixel_size // 2, h - 1)
+            r, g, b = result[sample_y, sample_x][0], result[sample_y, sample_x][1], result[sample_y, sample_x][2]
+            hex_code = f"#{r:02X}{g:02X}{b:02X}"
+
+            # Get the assigned number for this color
+            number = color_map.get(hex_code)
+            if number is None:
+                continue
+
+            # Brightness check: use perceived luminance formula
+            # If luminance > 128 background is light → black text, otherwise white text
+            luminance = 0.299 * r + 0.587 * g + 0.114 * b
+            text_color = (0, 0, 0) if luminance > 128 else (255, 255, 255)
+
+            # Calculate center of the grid square
+            center_x = x + pixel_size // 2
+            center_y = y + pixel_size // 2
+
+            # Get text size to perfectly center it
+            text = str(number)
+            (text_w, text_h), _ = cv2.getTextSize(text, font, font_scale, thickness)
+            text_x = center_x - text_w // 2
+            text_y = center_y + text_h // 2
+
+            cv2.putText(result, text, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+
+    return result

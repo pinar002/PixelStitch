@@ -5,7 +5,7 @@ import numpy as np
 from fastapi import APIRouter, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from database import get_connection
-from image_processor import process_image, apply_adjustments, draw_grid, get_hex_palette
+from image_processor import process_image, apply_adjustments, draw_grid, get_hex_palette, draw_color_numbers
 
 router = APIRouter()
 
@@ -49,6 +49,8 @@ def convert_image(
     brightness: int = Form(0),
     sharpness: int = Form(0),
     vibrance: int = Form(0),
+    show_grid: bool = Form(True),
+    show_numbers: bool = Form(True),
 ):
     # retrieve file path from db
     conn = get_connection()
@@ -63,9 +65,15 @@ def convert_image(
 
     # image processing
     result_image, hex_palette = process_image(file_path, pixel_size, max_colors)
-    result_image = apply_adjustments(result_image, brightness, sharpness, vibrance)
-    result_image = draw_grid(result_image, pixel_size)
 
+    if show_numbers:
+        result_image = draw_color_numbers(result_image, pixel_size, hex_palette)
+
+    result_image = apply_adjustments(result_image, brightness, sharpness, vibrance)
+
+    if show_grid:
+        result_image = draw_grid(result_image, pixel_size)
+    
     # store the result in db
     output_filename = f"output_{image_id}.png"
     output_path = f"{OUTPUT_DIR}/{output_filename}"
