@@ -103,3 +103,49 @@ def convert_image(
         "output_path": output_path,
         "palette": hex_palette
     }
+
+@router.post("/render")
+def render_pattern(
+    conversion_id: int = Form(...),
+    show_grid: bool = Form(True),
+    show_numbers: bool = Form(True),
+):
+    # Fetch conversion settings from database
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT image_id, pixel_size, max_colors, brightness, sharpness, vibrance FROM conversions WHERE id = %s",
+        (conversion_id,)
+    )
+    row = cur.fetchone()
+    if not row:
+        return JSONResponse(status_code=404, content={"error": "Conversion not found"})
+
+    image_id, pixel_size, max_colors, brightness, sharpness, vibrance = row
+
+    # Fetch original image path
+    cur.execute("SELECT file_path FROM images WHERE id = %s", (image_id,))
+    image_row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not image_row:
+        return JSONResponse(status_code=404, content={"error": "Image not found"})
+
+    file_path = image_row[0]
+
+    # Re-run the processing pipeline
+    result_image, hex_palette = process_image(file_path, pixel_size, max_colors)
+    result_image = apply_adjustments(result_image, brightness, sharpness, vibrance)
+
+    if show_numbers:
+        result_image = draw_color_numbers(result_image, pixel_size, hex_palette)
+    if show_grid:
+        result_image = draw_grid(result_image, pixel_size)
+
+    # Overwrite the output file
+    output_path = f"{OUTPUT_DIR}/output_{image_id}.png"
+    result_bgr = cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(output_path, result_bgr)
+
+    return {"status": "ok", "output_path": output_path}
